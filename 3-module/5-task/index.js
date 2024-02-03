@@ -14,7 +14,7 @@ function getMinMax(str) {
     },
     {
       max: -Infinity,
-      min: Number.POSITIVE_INFINITY,
+      min: Infinity,
     }
   );
 }
