@@ -13,7 +13,7 @@ function getMinMax(str) {
       return acc;
     },
     {
-      max: Number.NEGATIVE_INFINITY,
+      max: -Infinity,
       min: Number.POSITIVE_INFINITY,
     }
   );
