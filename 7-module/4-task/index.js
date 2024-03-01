@@ -29,6 +29,31 @@ export default class StepSlider {
     this.setValue(this.config.value);
   }
 
+  getLeftRelative(clientX) {
+    let left = clientX - this.elem.getBoundingClientRect().left;
+    let leftRelative = left / this.elem.offsetWidth;
+
+    if (leftRelative < 0) {
+      leftRelative = 0;
+    }
+
+    if (leftRelative > 1) {
+      leftRelative = 1;
+    }
+
+    return leftRelative;
+  }
+
+  getNewValue(clientX) {
+    let leftRelative = this.getLeftRelative(clientX);
+    let segments = this.config.steps - 1;
+    console.log(">>> leftRelative, segments", leftRelative, segments);
+    let rowValue = leftRelative * segments;
+    const result = Math.round(rowValue);
+
+    return result;
+  }
+
   setValue(value) {
     this.value = value;
     let segments = this.config.steps - 1;
@@ -38,9 +63,7 @@ export default class StepSlider {
     this.progress.style.width = `${valuePercents}%`;
 
     let stepElements = this.steps.querySelectorAll("span");
-+
-
-    stepElements.forEach((step, index) => {
+    +stepElements.forEach((step, index) => {
       if (index === value) {
         step.classList.add("slider__step-active");
       } else {
@@ -51,19 +74,16 @@ export default class StepSlider {
 
   addEventListeners() {
     this.elem.addEventListener("click", this.onClick.bind(this));
-    document.addEventListener("pointerdown", this.onPointerDown.bind(this));
-    document.addEventListener("pointermove", this.onPointerMove.bind(this));
-    document.addEventListener("pointerup", this.onPointerUp.bind(this));
+    this.thumb.addEventListener("pointerdown", this.onPointerDown.bind(this));
+    this.elem.addEventListener("pointermove", this.onPointerMove.bind(this));
+    this.thumb.addEventListener("pointerup", this.onPointerUp.bind(this));
   }
 
   onClick(event) {
-    let left = event.clientX - this.elem.getBoundingClientRect().left;
-    let leftRelative = left / this.elem.offsetWidth;
-    let segments = this.config.steps - 1;
-    let value = Math.round(leftRelative * segments);
+    let value = this.getNewValue(event.clientX);
 
     this.setValue(value);
-    this.triggerChangeEvent();
+    this.triggerChangeEvent(value);
   }
 
   onPointerDown(event) {
@@ -76,19 +96,9 @@ export default class StepSlider {
   onPointerMove(event) {
     if (this.activePointerId !== event.pointerId) return;
 
-    let left = event.clientX - this.elem.getBoundingClientRect().left;
-    let leftRelative = left / this.elem.offsetWidth;
+    let leftRelative = this.getLeftRelative(event.clientX);
 
-    if (leftRelative < 0) {
-      leftRelative = 0;
-    }
-
-    if (leftRelative > 1) {
-      leftRelative = 1;
-    }
-
-    let segments = this.config.steps - 1;
-    let value = Math.round(leftRelative * segments);
+    let value = this.getNewValue(event.clientX);
 
     if (this.value !== value) {
       this.setValue(value);
@@ -99,20 +109,19 @@ export default class StepSlider {
     this.progress.style.width = `${leftPercents}%`;
   }
 
-  triggerChangeEvent() {
+  triggerChangeEvent(value) {
     this.elem.dispatchEvent(
       new CustomEvent("slider-change", {
-        detail: this.value,
+        detail: value,
         bubbles: true,
       })
     );
   }
 
   onPointerUp(event) {
-    this.setValue(this.value);
-    this.triggerChangeEvent();
-
     if (this.activePointerId !== event.pointerId) return;
+
+    this.triggerChangeEvent(this.value);
 
     this.elem.classList.remove("slider_dragging");
     delete this.activePointerId;
